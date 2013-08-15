@@ -84,7 +84,7 @@
    "Love your bot? Give him a snack and thank him for his hard work!"
    #{"botsnack"}
    (fn [{:keys [nick bot] :as com-m}]
-     (registry/send-message com-m (utilities/prefix nick "Thanks! Om nom nom!!"))))
+     (send-message com-m (prefix nick "ummm, thanks *squee*"))))
 
   (:cmd
    "Prints an amusing message."
