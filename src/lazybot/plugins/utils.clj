@@ -82,7 +82,7 @@
    "Love your bot? Give him a snack and thank him for his hard work!"
    #{"botsnack"}
    (fn [{:keys [nick bot] :as com-m}]
-     (send-message com-m (prefix nick "Thanks! Om nom nom!!"))))
+     (send-message com-m (prefix nick "ummm, thanks *squee*"))))
 
   (:cmd
    "Prints an amusing message."
