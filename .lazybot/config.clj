@@ -20,17 +20,16 @@
    :prefix-arrow "\u21D2 "
    :help {:admin-add? true  ; only admins can add help topics
           :admin-rm? true}   ; only admins can remove help topics
-   :clojure {:eval-prefixes {:defaults ["->" "." "," ; prefixes in any channel
+   :clojure {:eval-prefixes {:defaults ["->" "," ; prefixes in any channel
                                         #"&\|(.*?)(?=\|&|\|&|$)" ; stuff like &|this|&
                                         #"##(([^#]|#(?!#))+)\s*((##)?(?=.*##)|$)"]
                              ;; list of prefixes NOT to use in certain channels
                              "#tempchan" ["->"]   ; turn this off for testing
                              "#clojure" [","]}}    ; let clojurebot have this one
    :servers-port 8080                  ; port for plugins that require a webserver
-   "irc.freenode.net" {:channels ["#teamgelato"]
+   "irc.freenode.net" {:channels ["##flutterbot"]
                        :bot-name "flutterbot"
                        :sed {:blacklist #{"#teamgelato"}}
-                       :users {"some1" {:privs admin}}
                        :title {:automatic?  true}
                        :plugins plugins}})
 
