@@ -100,6 +100,12 @@
                              (->> args rest (interpose " ") (apply str))))))
 
   (:cmd
+   "Yells out 'DESTROY $1'"
+   #{"destroy"}
+   (fn [{:keys [bot nick args] :as com-m}]
+       (send-message com-m (str "DESTROY " (s/upper-case (first args)) "!!!!"))))
+
+  (:cmd
    "Temperature conversion. If given Cn, converts from C to F. If given Fn, converts from F to C."
    #{"tc" "tempconv"}
    (fn [{:keys [nick args bot] :as com-m}]
