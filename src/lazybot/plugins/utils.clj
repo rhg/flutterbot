@@ -16,6 +16,13 @@
     (= (->> s .toLowerCase (filter letters) (into #{})) letters)))
 
 (registry/defplugin
+
+  (:cmd
+    "Stares"
+    #{"stare"}
+    (fn [{:keys [nick bot args] :as com-m}]
+      (registry/send-message com-m (str "gives " (first args) " the stare") :action? true)))
+
   (:cmd
    "Gets the current time and date in UTC format."
    #{"time"}
