@@ -19,14 +19,11 @@
                              "#tempchan" ["->"]   ; turn this off for testing
                              "#clojure" [","]}}    ; let clojurebot have this one
    :servers-port 8080                  ; port for plugins that require a webserver
-   "irc.freenode.net" {:channels ["#tempchan"]
-                       :bot-name "lazybot-test"
-                       :sed {:blacklist #{"#tempchan2"}}
-                       :bot-password nil
-                       :users {"JohnDoe" {:pass "iliekpie", :privs :admin}
-                               "JaneDoe" {:pass "ohai", :privs :admin}}
-                       :title {:blacklist #{"#foo"}}
-                       :autoreply {:autoreplies {"#clojure" {#".*(https?://)richhickey(.github.com/\S*).*" "Nooooo, that's so out of date! Please see instead $1clojure$2 and try to stop linking to rich's repo."}}}
+   "irc.freenode.net" {:channels ["#teamgelato"]
+                       :bot-name "flutterbot"
+                       :sed {:blacklist #{"#teamgelato"}}
+                       :users {"some1" {:privs admin}}
+                       :title {:automatic?  true}
                        :plugins plugins}})
 
 ; users is a series of username to password and privileges.
