@@ -1,0 +1,9 @@
+[Unit]
+Description=flutterbot - an mlp inspired bot based on lazybot
+After=mongodb.target
+
+[Service]
+ExecStart=/opt/flutterbot/flutterbot
+
+[Install]
+WantedBy=multi-user.target
