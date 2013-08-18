@@ -16,6 +16,12 @@
 (defplugin
   
   (:cmd
+    "Hugs"
+    #{"hug"}
+    (fn [{:keys [args] :as com-m}]
+      (send-message com-m (str "hugs " (first args)) :action? true)))
+
+  (:cmd
     "Stares"
     #{"stare"}
     (fn [{:keys [nick bot args] :as com-m}]
