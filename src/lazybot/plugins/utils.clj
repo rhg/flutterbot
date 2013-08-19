@@ -18,14 +18,14 @@
   (:hook
     :on-join
     (fn [{:keys [channel nick] :as com-m}]
-      (println com-m (str "** " com-m " **"))
       (send-message (merge com-m {:channel (str "#" channel)}) (str "waves awkwardly at " nick) :action? true)))
 
   (:hook
     :on-part
-    (fn [{:keys [channel nick] :as com-m}]
-      (println com-m)
-      (send-message (merge com-m {:channel (str channel)}) "PONY DOWN!!!" :action? true)))
+    (fn [{:keys [com channel bot nick] :as com-m}]
+      (let [noun (or (get-in @bot [:config (:server @com) :part channel])
+                     "man")]
+        (send-message com-m (str noun " down!!!")))))
 
   (:cmd
     "Hugs"
