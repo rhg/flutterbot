@@ -9,6 +9,10 @@
             [clojure.string :as s])
   (:import java.net.InetAddress))
 
+(defn shout [msg]
+  "Shouts in a fluttershy style"
+  (str "umm, excuse me, " msg " *blush*"))
+
 (defn pangram? [s]
   (let [letters (into #{} "abcdefghijklmnopqrstuvwxyz")]
     (= (->> s .toLowerCase (filter letters) (into #{})) letters)))
@@ -25,7 +29,7 @@
     (fn [{:keys [com channel bot nick] :as com-m}]
       (let [noun (or (get-in @bot [:config (:server @com) :part channel])
                      "man")]
-        (send-message com-m (str noun " down!!!")))))
+        (send-message com-m (shout (str noun " down!!!"))))))
 
   (:cmd
     "Hugs"
@@ -126,7 +130,7 @@
    "Yells out 'DESTROY $1'"
    #{"destroy"}
    (fn [{:keys [bot nick args] :as com-m}]
-       (send-message com-m (str "DESTROY " (s/upper-case (first args)) "!!!!"))))
+       (send-message com-m (shout (str "destroy " (first args))))))
 
   (:cmd
    "Temperature conversion. If given Cn, converts from C to F. If given Fn, converts from F to C."
