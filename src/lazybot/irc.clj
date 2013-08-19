@@ -37,7 +37,7 @@
                                                :channel channel
                                                :query? query?))
                                     %))))
-            [:001 :privmsg :quit :join]))
+            [:001 :privmsg :quit :join :part]))
      refzors]))
 
 (defn make-bot
