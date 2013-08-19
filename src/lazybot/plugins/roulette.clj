@@ -35,6 +35,6 @@
     (fn [{:keys [nick] :as com-m}]
       (when (seq @pistol)
         (if (peek @pistol)
-          (send-message com-m "drags away the body" :action? true)
+          (send-message com-m (str "drags away " nick "'s body") :action? true)
           (send-message com-m (str nick " gets to live for now")))
         (swap! pistol pop)))))
