@@ -21,7 +21,7 @@
                                    (assoc :bot refzors :com (:irc irc-map))
                                    (dissoc :irc))
                                %)))
-            [:on-any :on-message :on-quit :on-join]))
+            [:on-any :on-message :on-quit :on-part :on-join]))
      refzors]))
 
 (defn make-bot-run
