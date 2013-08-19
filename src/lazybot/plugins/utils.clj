@@ -16,12 +16,24 @@
     (= (->> s .toLowerCase (filter letters) (into #{})) letters)))
 
 (registry/defplugin
+  
+  (:hook
+    :on-join
+    (fn [{:keys [channel nick] :as com-m}]
+      (println com-m (str "** " com-m " **"))
+      (registry/send-message (merge com-m {:channel (str "#" channel)}) (str "waves awkwardly at " nick) :action? true)))
+
+  (:hook
+    :on-part
+    (fn [{:keys [channel nick] :as com-m}]
+      (println com-m)
+      (registry/send-message (merge com-m {:channel (str channel)}) "PONY DOWN!!!" :action? true)))
 
   (:cmd
     "Hugs"
     #{"hug"}
     (fn [{:keys [args] :as com-m}]
-      (send-message com-m (str "hugs " (first args)) :action? true)))
+      (registry/send-message com-m (str "hugs " (first args)) :action? true)))
 
   (:cmd
     "Stares"
