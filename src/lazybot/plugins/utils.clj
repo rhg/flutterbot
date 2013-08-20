@@ -22,7 +22,7 @@
   (:hook
     :on-join
     (fn [{:keys [channel nick] :as com-m}]
-      (send-message (merge com-m {:channel (str "#" channel)}) (str "waves awkwardly at " nick) :action? true)))
+      (send-message (merge com-m {:channel nick}) (str "waves awkwardly at " nick) :notice? true)))
 
   (:hook
     :on-part
