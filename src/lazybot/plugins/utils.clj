@@ -19,6 +19,12 @@
 
 (defplugin
   
+  (:cmd
+    "Rapes someone"
+    #{"rape"}
+    (fn [{:keys [nick] :as com-m}]
+      (send-message com-m "um, let's not.......")))
+
   (:hook
     :on-join
     (fn [{:keys [channel nick] :as com-m}]
