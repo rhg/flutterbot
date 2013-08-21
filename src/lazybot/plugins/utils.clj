@@ -27,8 +27,10 @@
 
   (:hook
     :on-join
-    (fn [{:keys [channel nick] :as com-m}]
-      (send-message (merge com-m {:channel nick}) (str "welcome back " nick) :notice? true)))
+    (fn [{:keys [bot com channel nick] :as com-m}]
+      (let [channel (str "#" channel)]
+        (when-not ((set (get-in @bot [:config (:server @com) :greet :blacklist]) channel))
+          (send-message (merge com-m {:channel nick}) (str "welcome back " nick) :notice? true)))))
 
   (:hook
     :on-part
