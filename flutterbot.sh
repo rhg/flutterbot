@@ -1,3 +1,6 @@
 #!/bin/sh
 
-su flutterbot -c 'java -jar /opt/flutterbot.jar --logfile /var/log/flutterbot.log'
+cd /opt/flutterbot
+lein run \
+--logfile /var/log/flutterbot.log \
+--pidfile ${HOME}/flutterbot.pid

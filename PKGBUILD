@@ -1,29 +1,27 @@
 # Maintainer: Ricardo Gomez <ricardo.gomez331@gmail.com>
 pkgname=flutterbot
 pkgver=git
-pkgrel=1
+pkgrel=4
 pkgdesc="an mlp-inspired bot based on lazybot"
 arch=(x86_64 i686)
 url="github.com/rhg/flutterbot"
 license=('EPL')
-depends=(mongodb)
-makedepends=('leiningen')
-source=(git://github.com/rhg/$pkgname.git
+depends=(mongodb leiningen)
+install=flutterbot.install
+source=(git://github.com/rhg/$pkgname.git#branch=flutterbot
         flutterbot.sh
         flutterbot.service)
+
 md5sums=('SKIP'
-         '0af52abb1eb3a5acf91b27d3a4680f72'
-         '7c2f596d2d3371a30d7937329aa0025e')
-build() {
-	cd "$srcdir/$pkgname"
-        lein uberjar
-}
+         '51f035d53809e38c3b91e95711d22ced'
+         'f5fec5100a6f62bb97c0a6baa8a292cd')
 
 package() {
 	cd "$srcdir/$pkgname"
-        install -Dm755 target/lazybot.jar "$pkgdir/opt/flutterbot.jar
-        groupadd flutterbot
-        useradd -d /var/lib/flutterbot -m -g flutterbot flutterbot
-        install -Dm755 "$srcdir/flutterbot.sh" "$pkgdir/usr/bin/flutterbot
-        install -Dm755 "$srcdir/flutterbot.service" "$pkgdir/etc/systemd/system/flutterbot.service"
+	mkdir "$pkgdir/opt"
+	mv "$srcdir/$pkgname" "$pkgdir/opt/flutterbot"
+        install -Dm775 "$srcdir/flutterbot.sh" "$pkgdir/usr/bin/flutterbot"
+        install -Dm775 "$srcdir/flutterbot.service" "$pkgdir/etc/systemd/system/flutterbot.service"
+	chown -R 171:171 "$pkgdir/opt/flutterbot"
+	chmod -R 775 "$pkgdir/opt/flutterbot"
 }

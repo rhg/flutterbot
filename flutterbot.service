@@ -1,9 +1,13 @@
 [Unit]
 Description=flutterbot - an mlp inspired bot based on lazybot
+Requires=mongodb.service
 After=mongodb.service
 
 [Service]
-ExecStart=/opt/flutterbot/flutterbot
+Type=Forking
+User=flutterbot
+ExecStart=/usr/bin/flutterbot
+PidFile=%h/flutterbot.pid
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+post_install() {
+post_upgrade
+passwd -l flutterbot &>/dev/null
+}
+
+post_upgrade() {
+       getent group flutterbot >/dev/null || groupadd -g 171 flutterbot
+       getent passwd flutterbot >/dev/null || useradd -c 'Flutterbot - IRC bot' -u 171 -g flutterbot -b '/var/lib' -m -s /bin/false flutterbot
+}
