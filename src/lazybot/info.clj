@@ -1,5 +1,6 @@
 (ns lazybot.info
   (:require [clj-config.core :as cfg]
+            [clojure.string :as string]
             [clojure.java.io :refer [file]])
   (:import java.io.File
 	   org.apache.commons.io.FileUtils))

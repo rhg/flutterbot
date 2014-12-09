@@ -19,7 +19,7 @@
   (let [letters (into #{} "abcdefghijklmnopqrstuvwxyz")]
     (= (->> s .toLowerCase (filter letters) (into #{})) letters)))
 
-(defplugin
+(registry/defplugin
   
   (:cmd
     "Rapes someone"
