@@ -1,0 +1,15 @@
+ syntax: regexp
+
+count-lines\.sh
+pom\.xml
+.jar$
+^lib
+^classes
+^logs
+^logs
+.log
+\.cake
+target
+\.lein-failures
+\.lein-repl-history
+^\.ide
