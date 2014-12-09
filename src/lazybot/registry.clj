@@ -5,7 +5,8 @@
             [clojail.core :refer[thunk-timeout]]
             [clojure.string :refer [join]]
             [irclj.core :as ircb]
-            [somnium.congomongo :as mongo])
+            [somnium.congomongo :as mongo]
+            [somnium.congomongo.config :as mongo.config])
   (:import java.util.concurrent.TimeoutException))
 
 ;; ## Hook handling
@@ -133,8 +134,10 @@
            m-name# (keyword (last (.split (str pns#) "\\.")))]
        (defn ~'load-this-plugin [com# bot#]
          (when ~init ((if-seq-error "init" ~init) com# bot#))
-         (doseq [idx# ~indexes]
-           (apply mongo/add-index! m-name# idx#))
+         ; XXX: this is a very ugly hack to make mongo truly optional as far as core functionality
+         (if ~mongo.config/*mongo-config*
+           (doseq [idx# ~indexes]
+             (apply mongo/add-index! m-name# idx#)))
          (dosync
           (alter bot# assoc-in [:modules m-name#]
                  {:commands ~scmd
