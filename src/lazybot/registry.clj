@@ -135,7 +135,7 @@
        (defn ~'load-this-plugin [com# bot#]
          (when ~init ((if-seq-error "init" ~init) com# bot#))
          ; XXX: this is a very ugly hack to make mongo truly optional as far as core functionality
-         (if ~mongo.config/*mongo-config*
+         (if mongo.config/*mongo-config*
            (doseq [idx# ~indexes]
              (apply mongo/add-index! m-name# idx#)))
          (dosync
