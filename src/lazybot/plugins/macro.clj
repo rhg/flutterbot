@@ -2,7 +2,7 @@
   (:require [lazybot.registry :as registry]
             [lazybot.plugins.login :refer [when-privs]]
             [lazybot.utilities :refer [prefix]]
-            [somnium.congomongo :as mongo]))
+            [lazybot.mongo :as mongo]))
 
 (registry/defplugin
   (:hook

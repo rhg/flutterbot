@@ -5,7 +5,7 @@
   (:require [lazybot.registry :as registry]
             [lazybot.info :as info]
             [useful.map :refer [keyed]]
-            [somnium.congomongo :refer [fetch-one insert! update!]]
+            [lazybot.mongo :refer [fetch-one insert! update!]]
             [clojure.string :as string])
   (:import (java.util.concurrent Executors ScheduledExecutorService TimeUnit)))
 

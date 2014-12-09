@@ -2,7 +2,7 @@
 ; Licensed under the EPL
 (ns lazybot.plugins.fortune
   (:require [lazybot.registry :as registry]
-            [somnium.congomongo :refer [fetch fetch-one insert! destroy!]]))
+            [lazybot.mongo :refer [fetch fetch-one insert! destroy!]]))
 
 (registry/defplugin
   (:cmd

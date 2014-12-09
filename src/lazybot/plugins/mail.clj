@@ -4,7 +4,7 @@
             [lazybot.info :as info]
             [clojure.string :as string]
             [lazybot.plugins.login :refer [when-privs]]
-            [somnium.congomongo :refer [fetch fetch-one insert! destroy!]]
+            [lazybot.mongo :refer [fetch fetch-one insert! destroy!]]
             [clj-time.core :as t]
             [clj-time.format :as f]))
 

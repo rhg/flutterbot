@@ -1,6 +1,6 @@
 (ns lazybot.plugins.whatis
   (:require [lazybot.registry :as registry]
-            [somnium.congomongo :refer [fetch fetch-one insert! destroy!]]))
+            [lazybot.mongo :refer [fetch fetch-one insert! destroy!]]))
 
 (defn tell-about [what com-m]
   (registry/send-message com-m

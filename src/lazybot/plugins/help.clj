@@ -5,7 +5,7 @@
             [lazybot.utilities :refer [prefix]]
             [lazybot.plugins.login :refer [when-privs]]
             [clojure.string :refer [join]]
-            [somnium.congomongo :refer [fetch fetch-one insert! destroy!]]))
+            [lazybot.mongo :refer [fetch fetch-one insert! destroy!]]))
 
 (registry/defplugin
   (:cmd

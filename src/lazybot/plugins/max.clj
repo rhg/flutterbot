@@ -1,6 +1,6 @@
 (ns lazybot.plugins.max
   (:require [lazybot.registry :as registry]
-            [somnium.congomongo :refer [fetch-one insert! destroy!]]))
+            [lazybot.mongo :refer [fetch-one insert! destroy!]]))
 
 (registry/defplugin
   (:hook

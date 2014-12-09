@@ -2,7 +2,7 @@
   (:require [lazybot.registry :as registry]
             [lazybot.info :as info]
             [lazybot.utilities :refer [format-time]]
-            [somnium.congomongo :refer [fetch fetch-one insert! destroy!]]
+            [lazybot.mongo :refer [fetch fetch-one insert! destroy!]]
             [clojure.string :refer [join]]))
 
 (defn now []
