@@ -1,11 +1,14 @@
 (ns lazybot.core
-  (:use [lazybot registry info]
-        [clojure.stacktrace :only [root-cause]]
-        [somnium.congomongo :only [mongo!]]
-        [clojure.set :only [intersection]]
-        [compojure.core :only [routes]]
-        [ring.middleware.params :only [wrap-params]]
-        [ring.adapter.jetty :only [run-jetty]])
+  (:require
+   [lazybot.registry :as registry]
+   [lazybot.info :as info]
+   [clojure.stacktrace :refer [root-cause]]
+   [somnium.congomongo :refer [mongo!]]
+   [clojure.set :refer [intersection]]
+   [compojure.core :refer [routes]]
+   [ring.middleware.params :refer [wrap-params]]
+   [ring.adapter.jetty :refer [run-jetty]]
+   [irclj.core :as ircb])
   (:import [java.io File FileReader]))
 
 ;; This is pretty much the only global mutable state in the entire bot, and it
@@ -20,7 +23,7 @@
   "Initiate the mongodb connection and set it globally."
   []
   (try
-    (mongo! :db (or (:db (read-config)) "lazybot"))
+    (mongo! :db (or (:db (info/read-config)) "lazybot"))
     (catch Throwable e
       (println "Error starting mongo (see below), carrying on without it")
       (.printStackTrace e))))
@@ -28,21 +31,29 @@
 (defn call-all
   "Call all hooks of a specific type."
   [{bot :bot :as ircm} hook-key]
-  (when-not (ignore-message? ircm)
-    (doseq [hook (pull-hooks bot hook-key)]
+  (when-not (registry/ignore-message? ircm)
+    (doseq [hook (registry/pull-hooks bot hook-key)]
       (hook ircm))))
+
+(defn join-channels
+  [irc-map]
+  (let [network (:network irc-map)
+        channels (-> irc-map :bot deref :config (get network) :channels)]
+    ;; delay here because join expects it should deref
+    (apply ircb/join (delay irc-map) channels)))
 
 ;; Note that even the actual handling of commands is done via a hook.
 (def initial-hooks
   "The hooks that every bot, even without plugins, needs to have."
-  {:on-message [{:fn (fn [irc-map] (try-handle irc-map))}]
+  {:001 [{:fn join-channels}]
+   :privmsg [{:fn (fn [irc-map] (registry/try-handle irc-map))}]
    :on-quit []
    :on-join []})
 
 (defn reload-config
   "Reloads and sets the configuration in a bot."
   [bot]
-  (alter bot assoc :config (read-config)))
+  (alter bot assoc :config (info/read-config)))
 
 ;; A plugin is just a file on the classpath with a namespace of
 ;; `lazybot.plugins.<x>` that contains a call to defplugin.
@@ -65,8 +76,8 @@
 (defn load-plugins
   "Load all plugins specified in the bot's configuration."
   [irc refzors]
-  (let [info (:config @refzors)]
-    (doseq [plug (:plugins (info (:server @irc)))]
+  (let [plugins (-> @refzors :config (get (:network @irc)) :plugins)]
+    (doseq [plug plugins]
       (load-plugin irc refzors plug))))
 
 (defn reload-configs

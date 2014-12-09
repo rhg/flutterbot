@@ -5,7 +5,6 @@
             [clojure.string :as s]
             [tentacles.issues :refer [specific-issue]]
             [useful.map :refer [update]]
-            [clojure.pprint :refer [pprint]]
             [cheshire.core :refer [parse-string]])
   (:import java.net.InetAddress))
 
@@ -84,13 +83,18 @@ specified in config.clj."
 
 (defn extract-issues
   "Extract issues out of a message."
-  [message]
-  (re-seq #"[\w-]+\/[.\w-]+#\d+" message))
+  [message channel bot com]
+  (let [bot-name (get-in @bot [:config (:network @com) :bot-name])
+        default-repo (get-in @bot [:config (:network @com) :github
+                                   :channel-repos channel])]
+    (if (and default-repo (.startsWith message (str bot-name \:)))
+      (map str (cycle [default-repo]) (re-seq #"#\d+" message))
+      (re-seq #"[\w-]+\/[.\w-]+#\d+" message))))
 
 (defn parse-issue
   "Parse an issue message into its user, repo, and issue number parts."
   [s]
-  (-> (zipmap [:user :repo :issue] 
+  (-> (zipmap [:user :repo :issue]
               (s/split s #"\/|#"))
       (update :issue #(Long. %))))
 
@@ -105,13 +109,13 @@ specified in config.clj."
 (defplugin
   (:init
    (fn [com bot]
-     (swap! bots assoc (:server @com) {:com com :bot bot})))
+     (swap! bots assoc (:network @com) {:com com :bot bot})))
   (:routes (POST "/commits" req (handler req)))
 
   (:hook
-   :on-message
-   (fn [{:keys [message nick bot com] :as com-m}]
-     (when-not ((get-in @bot [:config (:server @com) :user-blacklist]) nick)
-       (doseq [issue (extract-issues message)]
+   :privmsg
+   (fn [{:keys [message channel nick bot com] :as com-m}]
+     (when-not (get-in @bot [:config (:network @com) :user-blacklist nick])
+       (doseq [issue (extract-issues message channel bot com)]
          (when-let [message (issue-message (parse-issue issue))]
            (send-message com-m message)))))))

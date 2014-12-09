@@ -1,6 +1,6 @@
 (ns lazybot.plugins.login
-  (:use lazybot.registry
-        [lazybot.utilities :only [prefix]]))
+  (:require [lazybot.registry :as registry]
+            [lazybot.utilities :refer [prefix]]))
 
 (defn logged-in [bot]
   (or (:logged-in bot)
@@ -27,10 +27,10 @@
   `(let [{bot# :bot nick# :nick} ~com-m]
      (if (has-privs? bot# nick# ~priv)
        (do ~@body)
-       (send-message ~com-m (prefix nick# "It is not the case that you don't not unhave insufficient privileges to do this.")))))
+       (registry/send-message ~com-m (prefix nick# "It is not the case that you don't not unhave insufficient privileges to do this.")))))
 
-(defplugin
-  (:hook :on-quit
+(registry/defplugin
+  (:hook :part
          (fn [{:keys [com bot nick]}]
            (when (logged-in? bot nick)
              (dosync (alter bot update-in [:logged-in]
@@ -39,28 +39,28 @@
   (:cmd 
    "Best executed via PM. Give it your password, and it will log you in."
    #{"login"}
-   (fn [{:keys [com bot nick hmask channel args] :as com-m}]
-     (if (check-login nick hmask (first args) (:server @com) bot)
-       (send-message com-m "You've been logged in.")
-       (send-message com-m "Username and password combination/hostmask do not match."))))
+   (fn [{:keys [network bot nick event channel args event query?] :as com-m}]
+     (if (check-login nick (:host event) (first args) network bot)
+       (registry/send-message com-m "You've been logged in.")
+       (registry/send-message com-m "Username and password combination/hostmask do not match."))))
   
   (:cmd
    "Logs you out."
    #{"logout"}
    (fn [{:keys [com bot nick] :as com-m}]
      (dosync (alter bot update-in [:logged-in] dissoc nick)
-             (send-message com-m "You've been logged out."))))
+             (registry/send-message com-m "You've been logged out."))))
 
    (:cmd
     "Finds your privs"
     #{"privs"}
-    (fn [{:keys [com bot channel nick] :as com-m}]
+    (fn [{:keys [com bot channel nick network] :as com-m}]
       (do
-        (send-message
+        (registry/send-message
          com-m
          (prefix nick
                  "You have privilege level "
-                 (if-let [user ((:users ((:config @bot) (:server @com))) nick)]
+                 (if-let [user ((:users ((:config @bot) network)) nick)]
                    (name (:privs user))
                    "nobody")
                  "; you are " 

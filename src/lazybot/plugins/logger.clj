@@ -1,14 +1,14 @@
 (ns lazybot.plugins.logger
-  (:use [lazybot registry]
-        [clj-time.core :only [now from-time-zone time-zone-for-offset]]
-        [clj-time.format :only [unparse formatters]]
-        [clojure.java.io :only [file]]
-        [clojure.string :only [join]]
-        [compojure.core :only [context]]
-        [compojure.route :only [not-found]]
-        [hiccup.util :only [url-encode]]
-        [hiccup.page :only [html5]])
-  (:require [compojure.core :refer [GET]]
+  (:require [lazybot.registry :as registry]
+            [clj-time.core :refer [now from-time-zone time-zone-for-offset]]
+            [clj-time.format :refer [unparse formatters]]
+            [clojure.java.io :refer [file]]
+            [clojure.string :refer [join]]
+            [compojure.core :refer [context]]
+            [compojure.route :refer [not-found]]
+            [hiccup.util :refer [url-encode]]
+            [hiccup.page :refer [html5]]
+            [compojure.core :refer [GET]]
             [clj-http.util])
   (:import [java.io File]))
 
@@ -60,9 +60,9 @@
     [(unparse (formatters :date) time)
      (unparse (formatters :hour-minute-second) time)]))
 
-(defn log-message [{:keys [com bot nick channel message action?]}]
+(defn log-message [{:keys [network bot nick channel message action?]}]
   (let [config (:config @bot)
-        server (:server @com)]
+        server network]
     (when-let [log-dir (log-dir config server channel)]
       (let [[date time] (date-time config)
             log-file (file log-dir (str date ".txt"))]
@@ -133,7 +133,7 @@
 
 (def pathreg #"[^\/]+")
 
-(defplugin
+(registry/defplugin
   (:routes (context "/logger" []
               (GET "/" req (index req))
               (GET ["/:server" :server pathreg] [server]
@@ -151,10 +151,10 @@
                   [server channel file]
                   (file-index server channel file))
               (not-found "These are not the logs you're looking for.")))
-  (:hook :on-message #'log-message)
+  (:hook :privmsg #'log-message)
   (:hook
    :on-send-message
    (fn [com bot channel message action?]
      (log-message {:com com :bot bot :channel channel :message message
-                   :nick (:name @com) :action? action?})
+                   :nick (:nick @com) :action? action? :network (:network @com)})
      message)))

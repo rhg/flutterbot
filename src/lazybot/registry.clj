@@ -1,10 +1,10 @@
 (ns lazybot.registry
-  (:use [useful.fn :only [fix to-fix]]
-        [lazybot.utilities :only [on-thread verify validator]]
-        [useful.fn :only [!]]
-        [clojail.core :only [thunk-timeout]]
-        [clojure.string :only [join]])
-  (:require [irclj.core :as ircb]
+  (:require [useful.fn :refer [fix to-fix]]
+            [lazybot.utilities :refer [on-thread verify validator]]
+            [useful.fn :refer [!]]
+            [clojail.core :refer[thunk-timeout]]
+            [clojure.string :refer [join]]
+            [irclj.core :as ircb]
             [somnium.congomongo :as mongo])
   (:import java.util.concurrent.TimeoutException))
 
@@ -62,41 +62,43 @@
 
 ;; This is what you should use for sending messages.
 ;; TODO: Document
-(defn send-message [{:keys [com bot channel]} s & {:keys [action? notice?]}]
-  (if-let [result (call-message-hooks com bot channel s action?)]
-    ((cond
-      action? ircb/send-action
-      notice? ircb/send-notice
-      :else ircb/send-message)
-     com channel result)))
+(defn send-message [{:keys [bot com channel] :as irc} s
+                    & {:keys [action? notice?]}]
+  (let [result (call-message-hooks com bot channel s action?)
+        writer (cond
+                action? ircb/ctcp
+                notice? ircb/notice
+                :else ircb/message)]
+    (writer com channel result)))
 
 (defn ignore-message? [{:keys [nick bot com]}]
-  (-> @bot
-      (get-in [:config (:server @com) :user-blacklist])
+  (-> bot
+      (get-in [:config (:server com) :user-blacklist])
       (contains? (.toLowerCase nick))))
 
-(defn try-handle [{:keys [nick channel bot message] :as com-m}]
-  (when-not (ignore-message? com-m)
-    (on-thread
-     (let [conf (:config @bot)
-           query? (= channel nick)
-           max-ops (:max-operations conf)]
-       (when (or (is-command? message (:prepends conf)) query?)
-         (if (dosync
-              (let [pending (:pending-ops @bot)
-                    permitted (< pending max-ops)]
-                (when permitted
-                  (alter bot assoc :pending-ops (inc pending)))))
-           (try
-             (let [n-bmap (into com-m (split-args conf message query?))]
-               (thunk-timeout #((respond n-bmap) n-bmap)
-                              30 :sec))
-             (catch TimeoutException _ (send-message com-m "Execution timed out."))
-             (catch Exception e (.printStackTrace e))
-             (finally
-               (dosync
-                (alter bot assoc :pending-ops (dec (:pending-ops @bot))))))
-           (send-message com-m "Too much is happening at once. Wait until other operations cease.")))))))
+(defn try-handle
+  "attempt to handle input from an IRC channel"
+  [{:keys [nick bot-nick channel bot message event query?] :as state}]
+  {:pre [(= nick (:nick event))]}
+  (when-not (ignore-message? state)
+    (let [{:keys [config pending-ops]} @bot
+          {:keys [max-operations prepends]} config
+          respond? (or (is-command? message prepends)
+                       query?)
+          overtaxed? (>= pending-ops max-operations)]
+      (when respond?
+        (if overtaxed?
+          (send-message state "Too much is happening at once. Wait until other operations cease.")
+          (try
+            (dosync (alter bot update-in [:pending-ops] inc))
+            (let [state (into state (split-args config message query?))]
+              (thunk-timeout #((respond state) state)
+                             30 :sec))
+            (catch TimeoutException _
+              (send-message state "Execution timed out."))
+            (catch Exception e (.printStackTrace e))
+            (finally
+              (dosync (alter bot update-in [:pending-ops] dec)))))))))
 
 ;; ## Plugin DSL
 (defn merge-with-conj [& args]

@@ -12,8 +12,8 @@
 ; * Enjoy
 
 (ns lazybot.plugins.notifo
-  (:use lazybot.registry
-        [compojure.core :only [POST]]))
+  (:require [lazybot.registry :as registry]
+            [compojure.core :refer [POST]]))
 
 (def bots (atom {}))
 
@@ -29,11 +29,11 @@
       (doseq [[server channels] conf]
         (let [com-m (@bots server)]
           (doseq [chan channels]
-            (send-message (assoc com-m :channel chan) message))))))
+            (registry/send-message (assoc com-m :channel chan) message))))))
   "These boots are made for walkin' and that's just what they'll do.")
 
-(defplugin
+(registry/defplugin
   (:init
    (fn [irc bot]
-     (swap! bots assoc (:server @irc) {:irc irc :bot bot})))
+     (swap! bots assoc (:network @irc) {:irc irc :bot bot})))
   (:routes (POST "/notifo" req (handler req))))

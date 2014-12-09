@@ -2,9 +2,11 @@
 ; Licensed under the EPL
 
 (ns lazybot.plugins.karma
-  (:use [lazybot registry info]
-        [useful.map :only [keyed]]
-        [somnium.congomongo :only [fetch-one insert! update!]])
+  (:require [lazybot.registry :as registry]
+            [lazybot.info :as info]
+            [useful.map :refer [keyed]]
+            [somnium.congomongo :refer [fetch-one insert! update!]]
+            [clojure.string :as string])
   (:import (java.util.concurrent Executors ScheduledExecutorService TimeUnit)))
 
 (defn- key-attrs [nick server channel]
@@ -42,37 +44,39 @@
             :else [(str (get-in @bot [:config :prefix-arrow]) new-karma)
                    (alter limit update-in [nick snick] (fnil inc 0))])))]
     (when apply
-      (set-karma snick (:server @com) channel new-karma)
+      (set-karma snick (:network @com) channel new-karma)
       (schedule #(dosync (alter limit update-in [nick snick] dec))))
-    (send-message com-m msg)))
+    (registry/send-message com-m msg)))
 
 (defn karma-fn
   "Create a plugin command function that applies f to the karma of the user specified in args."
   [f]
-  (fn [{:keys [com channel args] :as com-m}]
+  (fn [{:keys [network channel args] :as com-m}]
     (let [snick (first args)
-          karma (get-karma snick (:server @com) channel)
+          karma (get-karma snick network channel)
           new-karma (f karma)]
       (change-karma snick new-karma com-m))))
 
 (def print-karma
-  (fn [{:keys [com bot channel args] :as com-m}]
-    (let [nick (first args)]
-      (send-message com-m
-                    (if-let [karma (get-karma nick (:server @com) channel)]
-                      (str nick " has karma " karma ".")
-                      (str "I have no record for " nick "."))))))
+  (fn [{:keys [network bot channel args] :as com-m}]
+    (let [nick (string/join \space args)]
+      (registry/send-message
+       com-m
+       (if-let [karma (get-karma nick network  channel)]
+         (str nick " has karma " karma ".")
+         (str "I have no record for " nick "."))))))
 
-(defplugin
-  (:hook :on-message
-         (fn [{:keys [message] :as com-m}]
-           (let [[_ direction snick] (re-find #"^\((inc|dec|identity) (.+)\)(\s*;.*)?$" message)]
-             (when snick
-               ((case direction
-                  "inc" (karma-fn inc)
-                  "dec" (karma-fn dec)
-                  "identity" print-karma)
-                (merge com-m {:args [snick]}))))))
+(registry/defplugin
+  (:hook
+   :privmsg
+   (fn [{:keys [message] :as com-m}]
+     (let [[_ direction snick] (re-find #"^\((inc|dec|identity)\s*([^)]+)\s*\)(\s*;.*)?$" message)]
+       (when snick
+         ((case direction
+            "inc" (karma-fn inc)
+            "dec" (karma-fn dec)
+            "identity" print-karma)
+          (merge com-m {:args [snick]}))))))
   (:cmd
    "Checks the karma of the person you specify."
    #{"karma" "identity"} print-karma)

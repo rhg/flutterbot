@@ -1,9 +1,10 @@
-(let [plugins #{"dictionary" "lmgtfy" "google" "eball" "utils" "leet" "clojure"
-                "login" "log" "brainfuck" "whatis" "shorturl"
-                "mail" "timer" "rss" "title" "operator" "seen" "sed" "help"
-                "load" "embedded" "karma" "fortune" "yesno" "autoreply" "weather" "unix-jokes"}]
-  {:servers ["irc.freenode.net" "quebec.androidarea51.com"]        ; A list of servers.
-   :github ["https://github.com/rhg/flutterbot" "https://github.com/teamgelato/android_device_lge_vm701"]
+(let [plugins #{"autoreply" "brainfuck" "clojure" "clojuredocs" "debug" "dictionary" "eball"
+                "embedded" "fortune" "google" "haskell" "hello-world" "help" "javadoc"
+                "jruby" "karma" "leet" "lmgtfy" "load" "log" "logger" "login"
+                "macro" "mail" "max" "mute" "operator" "ping" "rss"
+                "sed" "seen" "shorturl" "timer" "title" "unix-jokes" "utils" "weather"
+                "whatis" "yesno"}]
+   {:servers ["irc.freenode.net" "quebec.androidarea51.com"]        ; A list of servers.
    :prepends #{"@"}   ; The character you want for a prepend. Currently set to @
    :weather {:token ""} ; Wunderground token.
    :dictionary {:wordnik-key "99c266291da87b231f40a0c8902040da0b568588c25526cff"} ; Wordnik API key.

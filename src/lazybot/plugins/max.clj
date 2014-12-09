@@ -1,10 +1,10 @@
 (ns lazybot.plugins.max
-  (:use lazybot.registry
-        [somnium.congomongo :only [fetch-one insert! destroy!]]))
+  (:require [lazybot.registry :as registry]
+            [somnium.congomongo :refer [fetch-one insert! destroy!]]))
 
-(defplugin
+(registry/defplugin
   (:hook
-   :on-join
+   :join
    (fn [{:keys [com nick channel]}]
      (future
       (when (= nick (:name @com))
@@ -19,7 +19,7 @@
    "Find out what the most users ever in this channel at any one time is."
    #{"max"}
    (fn [{:keys [channel] :as com-m}]
-     (send-message com-m
+     (registry/send-message com-m
                    (str "The most users ever in " channel " is "
                         (:max (fetch-one :max :where {:channel channel}))))))
   (:indexes [[:channel]]))

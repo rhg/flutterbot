@@ -1,14 +1,15 @@
 (ns lazybot.plugins.sed
-  (:use [lazybot registry info]
-        [lazybot.utilities :only [prefix]]
-        [clojure.string :only [join]]
-        clojure.tools.logging))
+  (:require [lazybot.registry :as registry]
+            [lazybot.info :as info]
+            [lazybot.utilities :refer [prefix]]
+            [clojure.string :refer [join]]
+            [clojure.tools.logging :as logging]))
 
 (def message-map (atom {}))
 (def sed-regex #"^s/([^/]+)/([^/]*)/?")
 
 (defn- format-msg [{:keys [bot nick] :as com-m}]
-  (send-message com-m (prefix nick "Format is sed [-<user name>] s/<regexp>/<replacement>/ Try <prefix>help sed")))
+  (registry/send-message com-m (prefix nick "Format is sed [-<user name>] s/<regexp>/<replacement>/ Try <prefix>help sed")))
 
 (defn sed* [string regexp replacement]
   (try
@@ -29,7 +30,7 @@
         [regexp replacement] (next (re-find sed-regex margs))]
     (cond
      (and verbose? (empty? orig-msg))
-     (send-message com-m "No one said anything yet!")
+     (registry/send-message com-m "No one said anything yet!")
 
      (and verbose? (not-any? seq [regexp replacement]))
      (format-msg com-m)
@@ -38,20 +39,20 @@
      (try
        (let [new-msg (sed* orig-msg regexp replacement)]
          (when-not (= orig-msg new-msg)
-           (send-message com-m (str "<" user-to "> " new-msg))))
+           (registry/send-message com-m (str "<" user-to "> " new-msg))))
        (catch Exception _
          (when verbose? (format-msg com-m)))))))
 
-(defplugin
+(registry/defplugin
   (:hook
-   :on-message
-   (fn [{:keys [com bot nick message channel] :as com-m}]
+   :privmsg
+   (fn [{:keys [com network bot-name bot nick message channel] :as com-m}]
      (when (and (get-in @bot [:config :sed :automatic?])
-                (not (when-let [blacklist (get-in @bot [:config (:server @com) :sed :blacklist])]
+                (not (when-let [blacklist (get-in @bot [:config network :sed :blacklist])]
                        (blacklist channel))))
        (when (seq (re-find sed-regex message))
          (sed (assoc com-m :args [nick message]) false))
-       (when (and (not= nick (:name @com))
+       (when (and (not= nick bot-name)
                   (not= (take 4 message)
                         (-> @bot :config :prepends first (str "sed"))))
          (swap! message-map update-in [com channel]

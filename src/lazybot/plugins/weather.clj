@@ -1,7 +1,8 @@
 (ns lazybot.plugins.weather
-  (:use [lazybot registry [utilities :only [shorten-url]]])
   (:require [ororo.core :as w]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [lazybot.registry :as registry]
+            [lazybot.utilities :refer [shorten-url]]))
 
 (defn token [bot] (-> bot :config :weather :token))
 
@@ -17,7 +18,15 @@
   (fn [data]
     (string/join ":" ((juxt :hour :minute) (k data)))))
 
-(defplugin
+(def maybe-shorten
+  (let [shortener (resolve 'hobbit.core/shortener)
+        shorten (resolve 'hobbit.core/shorten)]
+    (fn maybe-shorten [bot url]
+      (if (and url shortener shorten)
+        (shorten (shortener "is.gd" (-> @bot :config :shorturl :auth)) url)
+        url))))
+
+(registry/defplugin
   (:cmd
    "Get the forecast for a location."
    #{"forecast"}
@@ -27,7 +36,7 @@
                         :txt_forecast
                         :forecastday
                        (map generate-forecast))]
-         (send-message (assoc com-m :channel nick) msg :notice? true)
+         (registry/send-message (assoc com-m :channel nick) msg :notice? true)
          (Thread/sleep 1000)))))
 
   (:cmd
@@ -36,7 +45,7 @@
    (fn [{:keys [bot nick args] :as com-m}]
      (when-let [token (token @bot)]
        (let [data (w/astronomy token (parse-location args))]
-         (send-message
+         (registry/send-message
           com-m
           (apply format
                  (str "Percentage of moon illuminated: %s; Age of moon: %s; "
@@ -49,24 +58,25 @@
    #{"radar"}
    (fn [{:keys [bot nick args] :as com-m}]
      (when-let [token (token @bot)]
-       (send-message com-m (:url (w/radar token (parse-location args)))))))
+       (registry/send-message com-m (:url (w/radar token (parse-location args)))))))
 
   (:cmd
    "Get the link to the satellite image for your area."
    #{"satellite"}
    (fn [{:keys [bot nick args] :as com-m}]
-     (when-let [token (token @bot)]
-       (send-message
-        com-m
-        (when-let [url (:image_url (w/satellite token (parse-location args)))]
-          (first (.split url "&api_key")))))))
+     (let [token (token @bot)
+           url (and token (:image_url (w/satellite token (parse-location args))))
+           url (and (string? url) (first (.split url "&api_key")))
+           url (and (string? url) (maybe-shorten bot url))]
+       (registry/send-message com-m
+                              (if url url "could not get satellite image")))))
 
   (:cmd
    "Get condition information for a location."
    #{"conditions"}
    (fn [{:keys [bot nick args] :as com-m}]
      (when-let [token (token @bot)]
-       (send-message
+       (registry/send-message
         com-m
         (let [data (w/conditions token (parse-location args))]
           (if (map? data)
