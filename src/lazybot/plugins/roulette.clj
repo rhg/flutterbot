@@ -33,7 +33,7 @@
           false (send-message com-m (str nick " gets to live another day"))
           true (do
                  (send-message com-m (str "drags away " nick "'s body"))
-                 (kick com channel nick :reason "BANG!")
+                 (kick com channel nick "BANG!")
                  (swap! dead conj nick)))
         (swap! pistol pop)))))
 
