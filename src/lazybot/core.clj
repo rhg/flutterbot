@@ -8,7 +8,8 @@
    [compojure.core :refer [routes]]
    [ring.middleware.params :refer [wrap-params]]
    [ring.adapter.jetty :refer [run-jetty]]
-   [irclj.core :as ircb])
+   [irclj.core :as ircb]
+   [lazybot.datomic-schema :as d-s])
   (:import [java.io File FileReader]))
 
 ;; This is pretty much the only global mutable state in the entire bot, and it
@@ -64,12 +65,34 @@
     (require ns :reload)
     ((resolve (symbol (str ns "/load-this-plugin"))) irc refzors)))
 
+(defn schema-map
+  [metamap]
+  (if (contains? metamap :datomic/schema)
+    {:txes      (d-s/get-txs (:datomic/schema metamap))
+     :requires (or (:datomic/requires metamap) [])}))
+
+(defn assoc-if-value
+  [m k v]
+  (if v
+    (assoc m k v)
+    m))
+
+(defn load-neo-plugin
+  "Loads a new style plugin"
+  [irc refzors plugin]
+  (let [ns (symbol (str "lazybot.plugins." plugin))]
+    (dosync
+      (alter refzors update-in [:datomic/schema-map] assoc-if-value (keyword plugin)
+             (schema-map (meta (the-ns ns)))))
+    (d-s/load-schema refzors (keyword plugin))))
+
 (defn safe-load-plugin
   "Load a plugin. Returns true if loading it was successful, false if
    otherwise."
   [irc refzors plugin]
   (try
     (load-plugin irc refzors plugin)
+    (load-neo-plugin irc refzors plugin)
     true
     (catch Exception e false)))
 
@@ -78,7 +101,8 @@
   [irc refzors]
   (let [plugins (-> @refzors :config (get (:network @irc)) :plugins)]
     (doseq [plug plugins]
-      (load-plugin irc refzors plug))))
+      (load-plugin irc refzors plug)
+      (load-neo-plugin irc refzors plug))))
 
 (defn reload-configs
   "Reloads the bot's configs. Must be ran in a transaction."

@@ -31,6 +31,7 @@
                  [hiccup "1.0.2"]
                  [me.raynes/least "0.1.3"]
                  [me.raynes/moments "0.1.1"]
+                 [com.datomic/datomic-free "0.9.5206"]
                  [org.clojure-grimoire/lib-grimoire "0.9.1"]]
   :uberjar-name "lazybot.jar"
   :main lazybot.run

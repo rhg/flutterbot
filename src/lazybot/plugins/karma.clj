@@ -2,11 +2,16 @@
 ; Licensed under the EPL
 
 (ns lazybot.plugins.karma
+  {:datomic/schema [[:karma/value :long :one "The amount of karma an user has"]
+                    [:karma/nick :string :one "The nick of an user"]
+                    [:karma/server :string :one "The server an user is on"]
+                    [:karma/channel :string :one "The channel an user is on"]]}
   (:require [lazybot.registry :as registry]
             [lazybot.info :as info]
             [useful.map :refer [keyed]]
             [somnium.congomongo :refer [fetch-one insert! update!]]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [datomic.api :as d])
   (:import (java.util.concurrent Executors ScheduledExecutorService TimeUnit)))
 
 (defn- key-attrs [nick server channel]
@@ -23,6 +28,32 @@
   (let [user-map (fetch-one :karma
                             :where (key-attrs nick server channel))]
     (get user-map :karma 0)))
+
+(defn id-for [db n c s]
+  (d/q '[:find ?e .
+         :in $ ?n ?c ?s
+         :where [?e :karma/nick ?n]
+                [?e :karma/channel ?c]
+                [?e :karma/server ?s]]
+       db n c s))
+
+(defn get-datomic-karma [db nick channel server]
+  (some-> (->> (id-for db nick channel server) (d/entity db))
+          :karma/value))
+
+(defn set-d-karma
+  [conn nick channel server karma]
+  (try
+    (if-let [id (id-for (d/db conn) nick channel server)]
+      @(d/transact conn [{:db/id       id
+                     :karma/value karma}])
+      @(d/transact conn [{:db/id #db/id[:db.part/user]
+                     :karma/nick nick
+                     :karma/channel channel
+                     :karma/server server
+                     :karma/value karma}]))
+    karma
+    (catch Exception _)))
 
 (def limit (ref {}))
 
@@ -44,7 +75,7 @@
             :else [(str (get-in @bot [:config :prefix-arrow]) new-karma)
                    (alter limit update-in [nick snick] (fnil inc 0))])))]
     (when apply
-      (set-karma snick (:network @com) channel new-karma)
+      (set-d-karma (-> (:datomic/uri @bot) d/connect) snick channel (:network @com) new-karma)
       (schedule #(dosync (alter limit update-in [nick snick] dec))))
     (registry/send-message com-m msg)))
 
@@ -60,9 +91,13 @@
 (def print-karma
   (fn [{:keys [network bot channel args] :as com-m}]
     (let [nick (string/join \space args)]
+      (println {:nick nick :c channel :n network})
       (registry/send-message
        com-m
-       (if-let [karma (get-karma nick network  channel)]
+       (if-let [karma (get-datomic-karma (-> (:datomic/uri @bot)
+                                             d/connect
+                                             d/db)
+                                         nick channel network)]
          (str nick " has karma " karma ".")
          (str "I have no record for " nick "."))))))
 

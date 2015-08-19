@@ -4,6 +4,7 @@
             [useful.fn :refer [decorate]]
             [useful.map :refer [keyed]]
             [irclj.core :as ircb]
+            [datomic.api :as d]
             [irclj.events :as events]))
 
 (defn make-hook
@@ -15,9 +16,13 @@
 (defn base-maps
   "Create the base callback and bot maps."
   [config]
-  (let [refzors (ref {:modules {:internal {:hooks lazybot/initial-hooks}}
+  (let [uri (or (:datomic-uri config)
+                "datomic:mem://lazybot")
+        refzors (ref {:modules {:internal {:hooks lazybot/initial-hooks}}
                       :config config
-                      :pending-ops 0})]
+                      :pending-ops 0
+                      :datomic/uri uri
+                      :datomic/schema-map {}})]
     [(into {:raw-log events/stdout-callback}
            (map
             (decorate
@@ -38,7 +43,8 @@
                                                :query? query?))
                                     %))))
             [:001 :privmsg :quit :join]))
-     refzors]))
+     refzors
+     uri]))
 
 (defn make-bot
   "Creates a new bot and connects it."
@@ -47,11 +53,12 @@
         port (get-in bot-config [server :port] 6667)
         [name pass channels] ((juxt :bot-name :bot-password :channels)
                                    (bot-config server))
-        [fnmap refzors] (base-maps bot-config)
+        [fnmap refzors uri] (base-maps bot-config)
         irc (ircb/connect server port name
                           :callbacks fnmap
                           :identify-after-secs 3)]
     (ircb/identify irc pass)
+    (d/create-database uri)
     [irc refzors]))
 
 (defn init-bot
